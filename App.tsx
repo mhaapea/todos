@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, FlatList, Button, TextInput} from 'react-native';
+import { StyleSheet, Text, View, FlatList, Button, TextInput, Pressable} from 'react-native';
 import React, { useState, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Row, RowProps } from './components/Row'
@@ -9,6 +9,7 @@ const storage_key = 'todo_items';
 interface Todo {
   id: string;
   name: string;
+  crossed: boolean;
 }
 
 export default function App() {
@@ -33,10 +34,22 @@ export default function App() {
   const addTodo = () => {
     if (input.trim()) {
       setTodos(prev => [
-        ...prev, { id: Date.now().toString(), name: input.trim()},
+        ...prev, { id: Date.now().toString(),
+                  name: input.trim(),
+                  crossed: false},
       ]);
       setInput('');
     }
+  };
+
+  const crossText = (id: string) => {
+    console.log('Pressed todo: ', id)
+    setTodos(prev =>
+      prev.map(todo =>
+        todo.id === id ? {...todo, crossed: !todo.crossed}
+        : todo
+      )
+    );
   };
 
   return (
@@ -53,12 +66,13 @@ export default function App() {
       data={todos}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <View style={styles.text}>
-          <Text style={styles.text}>{item.name}</Text>
-          <Button title="X" onPress={() => {
-            setTodos(prev => prev.filter(i => i.id !== item.id));
-          }}></Button>
-        </View>
+          <Pressable 
+            onPress={() => crossText(item.id)}
+            style={styles.row}>
+              <Text style={[styles.text, item.crossed && styles.crossed]}>
+                {item.name}
+              </Text>
+          </Pressable>
       )}>
       </FlatList>
       <StatusBar style="auto" />
@@ -89,9 +103,23 @@ const styles = StyleSheet.create({
   },
   text: {
     textAlign: 'center',
-    backgroundColor: '#f9f9f9',
-    borderBottomWidth: 1,
     borderColor: '#eee',
+    padding: 8,
+    fontSize: 22,
+  },
+  crossed: {
+    fontSize: 22,
+    textAlign: 'center',
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+    padding: 8,
+    color: 'grey',
+  },
+  row: {
+    flexDirection: 'row',
+    textAlign: 'center',
+    borderRadius: 5,
     padding: 16,
+    marginBottom: 12,
   }
 });
